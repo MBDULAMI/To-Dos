@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My planner</title>
+<style>
+:root{
+  --bg:#f6f5f1;--card:#fff;--text:#1f1f1d;--muted:#6f6e69;--line:#e2e0d8;--accent:#185fa5;--danger:#a32d2d;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#161615;--card:#201f1e;--text:#ecebe6;--muted:#a09f99;--line:#383735;--accent:#85b7eb;--danger:#f09595;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 80px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+h1{font-size:20px;font-weight:600;margin:0;flex:1}
+button,select,input{font:inherit;color:inherit}
+button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+button.icon{border:none;background:transparent;padding:2px 6px;color:var(--muted);font-size:16px;line-height:1}
+button.icon:hover{color:var(--danger)}
+.status{font-size:12px;color:var(--muted)}
+.banner{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.cats{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600;
+  background:color-mix(in srgb,var(--c) 20%,transparent);border-left:4px solid var(--c)}
+.chip.dashed{border:1px dashed var(--muted);background:transparent;font-weight:400;cursor:pointer}
+.catedit{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.catedit .row{display:flex;gap:8px;align-items:center;margin:4px 0}
+.catedit input[type=text]{flex:1;max-width:260px}
+input[type=text]{background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 6px;min-width:0}
+input[type=text]:hover{border-color:var(--line)}
+input[type=text]:focus{outline:none;border-color:var(--accent);background:var(--card)}
+.catedit input[type=text]{border-color:var(--line)}
+input[type=color]{width:30px;height:26px;padding:0;border:1px solid var(--line);border-radius:6px;background:transparent}
+.table{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.thead,.day{display:grid;grid-template-columns:130px minmax(0,1fr)}
+.thead{font-size:12px;color:var(--muted);font-weight:600}
+.thead>div{padding:8px 12px}
+.cols{display:grid;grid-template-columns:22px 22px 150px minmax(0,1fr) 92px 92px 24px;gap:6px;align-items:center}
+.thead .cols{padding:8px 12px}
+.day{border-top:1px solid var(--line)}
+.date{padding:10px 12px;border-right:1px solid var(--line)}
+.date b{display:block;font-weight:600}
+.date span{color:var(--muted);font-size:13px}
+.date button{margin-top:6px;font-size:12px;padding:0;border:none;background:none;color:var(--muted)}
+.date button:hover{color:var(--danger)}
+.tasks{padding:4px;min-height:44px}
+.tasks.over{outline:2px dashed var(--accent);outline-offset:-3px}
+.task{padding:5px 8px;margin:3px 0;border-radius:8px;border-left:4px solid var(--c);
+  background:color-mix(in srgb,var(--c) 18%,transparent)}
+.task.done .text{text-decoration:line-through;opacity:.6}
+.task.dragging{opacity:.4}
+.task.before{box-shadow:0 -3px 0 var(--accent)}
+.task.after{box-shadow:0 3px 0 var(--accent)}
+.handle{cursor:grab;padding:4px 0;color:var(--muted);user-select:none;text-align:center;font-size:16px;touch-action:none}
+.task input[type=checkbox]{width:16px;height:16px;margin:0;accent-color:var(--c)}
+.task select{background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 2px;font-weight:600;min-width:0;width:100%}
+.task select:hover,.task select:focus{border-color:var(--line);background:var(--card)}
+.task .time{text-align:center;width:100%}
+.task .time.bad{border-color:var(--danger)}
+.auto{font-size:10px;border:1px solid var(--muted);color:var(--muted);border-radius:4px;padding:0 4px;margin-left:4px}
+.textcell{display:flex;align-items:center;min-width:0}
+.textcell input{flex:1}
+.addtask{border:none;background:none;color:var(--muted);font-size:12px;padding:4px 10px}
+.addtask:hover{color:var(--accent)}
+.empty{padding:28px;text-align:center;color:var(--muted);border-top:1px solid var(--line)}
+.foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:14px}
+.foot .hint{color:var(--muted);font-size:12px;flex:1}
+.signin{max-width:360px;margin:18vh auto;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px}
+.err{color:var(--danger);font-size:13px;margin-top:10px}
+@media (max-width:760px){
+  .thead{display:none}
+  .day{grid-template-columns:1fr}
+  .date{border-right:none;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+  .date button{margin:0 0 0 auto}
+  .task .a-h{grid-area:h}.task .a-c{grid-area:c}.task .a-cat{grid-area:cat}.task .a-text{grid-area:text}
+  .task .a-s{grid-area:s}.task .a-e{grid-area:e}.task .a-del{grid-area:del}
+  .cols{grid-template-columns:22px 22px minmax(0,1fr) minmax(0,1fr) 24px;grid-template-areas:"h c text text del" ". . cat cat cat" ". . s e ."}
+}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<script>
+(async function () {
+'use strict';
+
+/* =====================================================================
+   STEP 1 OF SETUP: paste your Firebase config here.
+   Firebase console > Project settings > Your apps > Web app > Config.
+   While apiKey is empty, the planner runs in local mode and saves
+   only in this browser.
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDr_Bg0oErsXcgQ8Sw-UXBlcFv-aLeY0r8",
+  authDomain: "to-dos-3a82e.firebaseapp.com",
+  projectId: "to-dos-3a82e",
+  storageBucket: "to-dos-3a82e.firebasestorage.app",
+  messagingSenderId: "233292207600",
+  appId: "1:233292207600:web:961554c56a7dc8b9c6b935"
+};
+const FIREBASE_VERSION = "10.12.2";
+
+/* Stand-up is added automatically on these days (0 = Sunday ... 4 = Thursday). */
+const STANDUP = { days: [0, 2, 4], start: "11:30", end: "12:00", text: "Daily stand-up" };
+const WORKDAYS = [0, 1, 2, 3, 4];
+/* The first row of an empty planner. Format: year-month-day. */
+const START_DATE = "2026-11-01";
+const EXCEL_LIB = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DEFAULT_CATEGORIES = [
+  { id: "meeting", name: "Meeting", color: "#378add" },
+  { id: "pair", name: "Pair programming", color: "#7f77dd" },
+  { id: "learning", name: "Learning", color: "#639922" },
+  { id: "tech", name: "Technical task", color: "#d85a30" },
+  { id: "standup", name: "Stand-up", color: "#d4537e" }
+];
+const LOCAL_KEY = "planner-v1";
+
+const app = document.getElementById("app");
+let state = { categories: DEFAULT_CATEGORIES.map(c => ({ ...c })), days: [] };
+let store = null;
+let userEmail = "";
+let showCatEditor = false;
+let statusText = "";
+let drag = null;
+
+/* ---------- small helpers ---------- */
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const k in (props || {})) {
+    const v = props[k];
+    if (k === "class") el.className = v;
+    else if (k === "style") el.setAttribute("style", v);
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, "");
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const pad = n => String(n).padStart(2, "0");
+const toISO = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+function fromISO(s) { const p = s.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+function fmtDate(iso) { const p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+const dayName = iso => DAY_NAMES[fromISO(iso).getDay()];
+
+function nextWorkday(fromDate, includeSelf) {
+  const d = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+  if (!includeSelf) d.setDate(d.getDate() + 1);
+  while (!WORKDAYS.includes(d.getDay())) d.setDate(d.getDate() + 1);
+  return d;
+}
+function nextDayToAdd() {
+  if (!state.days.length) return nextWorkday(fromISO(START_DATE), true);
+  return nextWorkday(fromISO(state.days[state.days.length - 1].date), false);
+}
+
+/* Accepts "11:30 AM", "1130a", "2pm", "14:00", "9". Returns "HH:MM" or null. */
+function parseTime(input) {
+  const s = String(input).trim().toLowerCase().replace(/\s+/g, "");
+  if (!s) return "";
+  const m = s.match(/^(\d{1,2})(?:[:.]?(\d{2}))?([ap])?\.?m?\.?$/);
+  if (!m) return null;
+  let hr = Number(m[1]);
+  const min = m[2] ? Number(m[2]) : 0;
+  if (min > 59) return null;
+  if (m[3]) {
+    if (hr < 1 || hr > 12) return null;
+    if (m[3] === "a") hr = hr === 12 ? 0 : hr;
+    else hr = hr === 12 ? 12 : hr + 12;
+  } else if (hr > 23) {
+    return null;
+  } else if (hr >= 1 && hr <= 6) {
+    hr += 12; /* no AM/PM typed: 1 to 6 means afternoon, 7 to 11 means morning */
+  }
+  return pad(hr) + ":" + pad(min);
+}
+function fmtTime(v) {
+  if (!v) return "";
+  const p = v.split(":").map(Number);
+  const ap = p[0] >= 12 ? "PM" : "AM";
+  const hr = p[0] % 12 === 0 ? 12 : p[0] % 12;
+  return hr + ":" + pad(p[1]) + " " + ap;
+}
+
+/* ---------- storage ---------- */
+function localStore() {
+  const write = () => localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+  return {
+    async load() {
+      try { return JSON.parse(localStorage.getItem(LOCAL_KEY)); } catch (e) { return null; }
+    },
+    async saveDay() { write(); },
+    async deleteDay() { write(); },
+    async saveSettings() { write(); }
+  };
+}
+
+async function firebaseStore() {
+  const base = "https://www.gstatic.com/firebasejs/" + FIREBASE_VERSION + "/";
+  const [appMod, authMod, fs] = await Promise.all([
+    import(base + "firebase-app.js"),
+    import(base + "firebase-auth.js"),
+    import(base + "firebase-firestore.js")
+  ]);
+  const fbApp = appMod.initializeApp(firebaseConfig);
+  const auth = authMod.getAuth(fbApp);
+  const db = fs.getFirestore(fbApp);
+  let user = null;
+  const daysCol = () => fs.collection(db, "users", user.uid, "days");
+  const settingsDoc = () => fs.doc(db, "users", user.uid, "meta", "settings");
+  return {
+    onUser(cb) { authMod.onAuthStateChanged(auth, u => { user = u; cb(u); }); },
+    signIn() { return authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider()); },
+    signOut() { return authMod.signOut(auth); },
+    async load() {
+      const [snap, set] = await Promise.all([fs.getDocs(daysCol()), fs.getDoc(settingsDoc())]);
+      const days = [];
+      snap.forEach(d => days.push(d.data()));
+      return { categories: set.exists() ? set.data().categories : null, days };
+    },
+    saveDay(day) { return fs.setDoc(fs.doc(daysCol(), day.date), day); },
+    deleteDay(date) { return fs.deleteDoc(fs.doc(daysCol(), date)); },
+    saveSettings() { return fs.setDoc(settingsDoc(), { categories: state.categories }); }
+  };
+}
+
+function applyLoaded(data) {
+  if (!data) return;
+  if (Array.isArray(data.categories) && data.categories.length) state.categories = data.categories;
+  if (Array.isArray(data.days)) {
+    state.days = data.days
+      .filter(d => d && d.date)
+      .map(d => ({ date: d.date, tasks: Array.isArray(d.tasks) ? d.tasks : [] }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+}
+
+/* Saves are grouped: changes within half a second go out together. */
+const dirty = { days: new Set(), deleted: new Set(), settings: false };
+let saveTimer = null;
+function setStatus(t) {
+  statusText = t;
+  const el = document.getElementById("status");
+  if (el) el.textContent = t;
+}
+function queueSave() {
+  setStatus("Saving…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flush, 500);
+}
+function saveDay(day) { dirty.days.add(day.date); dirty.deleted.delete(day.date); queueSave(); }
+function saveSettings() { dirty.settings = true; queueSave(); }
+async function flush() {
+  const days = [...dirty.days], deleted = [...dirty.deleted], settings = dirty.settings;
+  dirty.days.clear(); dirty.deleted.clear(); dirty.settings = false;
+  try {
+    const jobs = [];
+    for (const date of deleted) jobs.push(store.deleteDay(date));
+    for (const date of days) {
+      const day = state.days.find(d => d.date === date);
+      if (day) jobs.push(store.saveDay(JSON.parse(JSON.stringify(day))));
+    }
+    if (settings) jobs.push(store.saveSettings());
+    await Promise.all(jobs);
+    if (!dirty.days.size && !dirty.deleted.size && !dirty.settings) setStatus("Saved");
+  } catch (e) {
+    console.error(e);
+    days.forEach(d => dirty.days.add(d));
+    deleted.forEach(d => dirty.deleted.add(d));
+    dirty.settings = dirty.settings || settings;
+    setStatus("Couldn't save. Check your connection, then edit anything to retry.");
+  }
+}
+window.addEventListener("beforeunload", e => {
+  if (dirty.days.size || dirty.deleted.size || dirty.settings) { flush(); e.preventDefault(); e.returnValue = ""; }
+});
+
+/* ---------- actions ---------- */
+const cat = id => state.categories.find(c => c.id === id) || state.categories[0];
+
+function addDaysToToday() {
+  const today = toISO(new Date());
+  let last = null;
+  while (toISO(nextDayToAdd()) <= today) last = createDay();
+  render();
+  if (last) scrollToLastDay();
+}
+function addDay() {
+  createDay();
+  render();
+  scrollToLastDay();
+}
+function scrollToLastDay() {
+  const rows = document.querySelectorAll(".day");
+  if (rows.length && rows[rows.length - 1].scrollIntoView) rows[rows.length - 1].scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function createDay() {
+  const date = toISO(nextDayToAdd());
+  const day = { date, tasks: [] };
+  if (STANDUP.days.includes(fromISO(date).getDay()) && state.categories.some(c => c.id === "standup")) {
+    day.tasks.push({ id: uid(), cat: "standup", text: STANDUP.text, start: STANDUP.start, end: STANDUP.end, done: false, auto: true });
+  }
+  state.days.push(day);
+  saveDay(day);
+  return day;
+}
+function removeDay(day) {
+  if (day.tasks.length && !confirm("Delete " + dayName(day.date) + " " + fmtDate(day.date) + " and its " + day.tasks.length + " task(s)?")) return;
+  state.days = state.days.filter(d => d !== day);
+  dirty.days.delete(day.date);
+  dirty.deleted.add(day.date);
+  queueSave();
+  render();
+}
+function addTask(day) {
+  const last = day.tasks[day.tasks.length - 1];
+  const task = { id: uid(), cat: state.categories[0].id, text: "", start: last ? last.end : "", end: "", done: false };
+  day.tasks.push(task);
+  saveDay(day);
+  render();
+  const el = document.querySelector('[data-task="' + task.id + '"] .text');
+  if (el) el.focus();
+}
+function removeTask(day, task) {
+  day.tasks = day.tasks.filter(t => t !== task);
+  saveDay(day);
+  render();
+}
+function moveTask(taskId, fromDate, toDate, index) {
+  const from = state.days.find(d => d.date === fromDate);
+  const to = state.days.find(d => d.date === toDate);
+  if (!from || !to) return;
+  const i = from.tasks.findIndex(t => t.id === taskId);
+  if (i < 0) return;
+  const [task] = from.tasks.splice(i, 1);
+  if (index == null || index > to.tasks.length) index = to.tasks.length;
+  if (from === to && i < index) index--;
+  to.tasks.splice(index, 0, task);
+  saveDay(from);
+  if (to !== from) saveDay(to);
+  render();
+}
+
+/* ---------- export ---------- */
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement("script");
+    el.src = src; el.onload = resolve; el.onerror = reject;
+    document.head.append(el);
+  });
+}
+function tint(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = v => Math.round(255 - (255 - v) * 0.28).toString(16).padStart(2, "0");
+  return ("FF" + mix(n >> 16 & 255) + mix(n >> 8 & 255) + mix(n & 255)).toUpperCase();
+}
+async function exportExcel() {
+  try {
+    if (!window.ExcelJS) { setStatus("Preparing Excel file…"); await loadScript(EXCEL_LIB); }
+  } catch (e) {
+    setStatus("Couldn't load the Excel exporter. Check your connection and try again.");
+    return;
+  }
+  const wb = new window.ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Planner", { views: [{ state: "frozen", ySplit: 1 }] });
+  ws.columns = [
+    { header: "Day", width: 13 }, { header: "Date", width: 13 }, { header: "Category", width: 20 },
+    { header: "Task", width: 46 }, { header: "Start", width: 11 }, { header: "End", width: 11 }, { header: "Done", width: 8 }
+  ];
+  ws.getRow(1).font = { bold: true };
+  const border = { style: "thin", color: { argb: "FFBFBFBF" } };
+  const box = { top: border, bottom: border, left: border, right: border };
+  state.days.forEach(day => {
+    const first = ws.rowCount + 1;
+    const tasks = day.tasks.length ? day.tasks : [null];
+    tasks.forEach(t => {
+      const c = t ? cat(t.cat) : null;
+      const row = ws.addRow([dayName(day.date), fmtDate(day.date), c ? c.name : "", t ? t.text : "",
+        t ? fmtTime(t.start) : "", t ? fmtTime(t.end) : "", t ? (t.done ? "Yes" : "No") : ""]);
+      row.eachCell({ includeEmpty: true }, (cell, col) => {
+        cell.border = box;
+        cell.alignment = { vertical: "middle", wrapText: col === 4 };
+        if (c && col >= 3) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: tint(c.color) } };
+      });
+    });
+    const last = ws.rowCount;
+    if (last > first) { ws.mergeCells(first, 1, last, 1); ws.mergeCells(first, 2, last, 2); }
+    ws.getCell(first, 1).font = { bold: true };
+  });
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const a = h("a", { href: URL.createObjectURL(blob), download: "planner-" + toISO(new Date()) + ".xlsx" });
+  document.body.append(a); a.click(); a.remove();
+  setStatus("Excel file downloaded");
+}
+
+/* ---------- rendering ---------- */
+function renderTask(day, task) {
+  const c = cat(task.cat);
+  const row = h("div", { class: "task cols" + (task.done ? " done" : ""), style: "--c:" + c.color, "data-task": task.id });
+
+  const handle = h("span", { class: "handle a-h", title: "Drag to move" }, "⠿");
+  handle.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+    drag = { id: task.id, from: day.date, target: null };
+    row.classList.add("dragging");
+  });
+  handle.addEventListener("pointermove", e => {
+    if (!drag) return;
+    if (e.clientY < 70) window.scrollBy(0, -14);
+    else if (e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+    clearDropMarks();
+    drag.target = null;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el) return;
+    const overTask = el.closest(".task");
+    const overDay = el.closest(".tasks");
+    if (!overDay) return;
+    const date = overDay.dataset.date;
+    if (overTask) {
+      const r = overTask.getBoundingClientRect();
+      const after = e.clientY >= r.top + r.height / 2;
+      overTask.classList.add(after ? "after" : "before");
+      const list = state.days.find(d => d.date === date).tasks;
+      drag.target = { date, index: list.findIndex(t => t.id === overTask.dataset.task) + (after ? 1 : 0) };
+    } else {
+      overDay.classList.add("over");
+      drag.target = { date, index: null };
+    }
+  });
+  const endDrag = commit => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    clearDropMarks();
+    row.classList.remove("dragging");
+    if (commit && d.target) moveTask(d.id, d.from, d.target.date, d.target.index);
+  };
+  handle.addEventListener("pointerup", () => endDrag(true));
+  handle.addEventListener("pointercancel", () => endDrag(false));
+
+  const check = h("input", { type: "checkbox", class: "a-c", title: "Done" });
+  check.checked = !!task.done;
+  check.addEventListener("change", () => { task.done = check.checked; row.classList.toggle("done", task.done); saveDay(day); });
+
+  const sel = h("select", { class: "a-cat", "aria-label": "Category" },
+    state.categories.map(k => h("option", { value: k.id }, k.name)));
+  sel.value = c.id;
+  sel.addEventListener("change", () => {
+    task.cat = sel.value;
+    row.style.setProperty("--c", cat(task.cat).color);
+    saveDay(day);
+  });
+
+  const text = h("input", { type: "text", class: "text", placeholder: "Review pull request", "aria-label": "Task" });
+  text.value = task.text || "";
+  text.addEventListener("input", () => { task.text = text.value; saveDay(day); });
+  text.addEventListener("keydown", e => { if (e.key === "Enter") addTask(day); });
+
+  const timeInput = (key, label, placeholder) => {
+    const el = h("input", { type: "text", class: "time a-" + key[0], placeholder, "aria-label": label });
+    el.value = fmtTime(task[key]);
+    el.addEventListener("change", () => {
+      const v = parseTime(el.value);
+      if (v === null) { el.classList.add("bad"); el.title = "Type a time like 9:30 AM"; return; }
+      el.classList.remove("bad"); el.title = "";
+      task[key] = v;
+      el.value = fmtTime(v);
+      checkOrder();
+      saveDay(day);
+    });
+    return el;
+  };
+  const start = timeInput("start", "Start time", "9:00 AM");
+  const end = timeInput("end", "End time", "10:00 AM");
+  function checkOrder() {
+    const wrong = task.start && task.end && task.end <= task.start;
+    end.classList.toggle("bad", !!wrong);
+    end.title = wrong ? "End is before start" : "";
+  }
+  checkOrder();
+
+  const del = h("button", { class: "icon a-del", title: "Delete task", "aria-label": "Delete task", onclick: () => removeTask(day, task) }, "×");
+
+  row.append(handle, check, sel,
+    h("div", { class: "textcell a-text" }, text, task.auto ? h("span", { class: "auto" }, "auto") : null),
+    start, end, del);
+  return row;
+}
+
+function clearDropMarks() {
+  document.querySelectorAll(".before,.after,.over").forEach(el => el.classList.remove("before", "after", "over"));
+}
+
+function renderDay(day) {
+  const tasks = h("div", { class: "tasks", "data-date": day.date }, day.tasks.map(t => renderTask(day, t)),
+    h("button", { class: "addtask", onclick: () => addTask(day) }, "+ Add task"));
+  return h("div", { class: "day" },
+    h("div", { class: "date" },
+      h("b", null, dayName(day.date)), h("span", null, fmtDate(day.date)),
+      h("button", { onclick: () => removeDay(day) }, "Delete day")),
+    tasks);
+}
+
+function renderCatEditor() {
+  const box = h("div", { class: "catedit" });
+  state.categories.forEach(c => {
+    const name = h("input", { type: "text", "aria-label": "Category name" });
+    name.value = c.name;
+    name.addEventListener("change", () => { c.name = name.value.trim() || c.name; saveSettings(); render(); });
+    const color = h("input", { type: "color", "aria-label": "Category color" });
+    color.value = c.color;
+    color.addEventListener("change", () => { c.color = color.value; saveSettings(); render(); });
+    const used = state.days.some(d => d.tasks.some(t => t.cat === c.id));
+    const locked = c.id === "standup" || state.categories.length === 1;
+    const del = h("button", { class: "icon", title: "Delete category", "aria-label": "Delete category", onclick: () => {
+      if (used && !confirm('Tasks in "' + c.name + '" will switch to "' + state.categories.find(k => k !== c).name + '". Delete it?')) return;
+      const fallback = state.categories.find(k => k !== c).id;
+      state.days.forEach(d => { let touched = false; d.tasks.forEach(t => { if (t.cat === c.id) { t.cat = fallback; touched = true; } }); if (touched) saveDay(d); });
+      state.categories = state.categories.filter(k => k !== c);
+      saveSettings(); render();
+    } }, "×");
+    box.append(h("div", { class: "row" }, color, name, locked ? null : del));
+  });
+  const newName = h("input", { type: "text", placeholder: "Code review", "aria-label": "New category name" });
+  const newColor = h("input", { type: "color", "aria-label": "New category color" });
+  newColor.value = "#1d9e75";
+  const add = () => {
+    const n = newName.value.trim();
+    if (!n) { newName.focus(); return; }
+    state.categories.push({ id: uid(), name: n, color: newColor.value });
+    saveSettings(); render();
+  };
+  newName.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
+  box.append(h("div", { class: "row" }, newColor, newName, h("button", { onclick: add }, "Add category")));
+  return box;
+}
+
+function render() {
+  const next = nextDayToAdd();
+  const catchUp = toISO(next) < toISO(new Date());
+
+  app.replaceChildren(...[
+    h("header", null,
+      h("h1", null, "My planner"),
+      h("span", { class: "status", id: "status" }, statusText),
+      userEmail ? h("span", { class: "status" }, userEmail) : null,
+      userEmail ? h("button", { onclick: () => store.signOut() }, "Sign out") : null),
+    !userEmail ? h("div", { class: "banner" }, "Local mode: tasks are saved in this browser only. Add your Firebase config to the file to sync across devices.") : null,
+    h("div", { class: "cats" },
+      state.categories.map(c => h("span", { class: "chip", style: "--c:" + c.color }, c.name)),
+      h("span", { class: "chip dashed", role: "button", tabindex: "0", onclick: () => { showCatEditor = !showCatEditor; render(); } },
+        showCatEditor ? "Close" : "Edit categories")),
+    showCatEditor ? renderCatEditor() : null,
+    h("div", { class: "table" },
+      h("div", { class: "thead" },
+        h("div", null, "Date"),
+        h("div", { class: "cols" }, h("span"), h("span"), h("span", null, "Category"), h("span", null, "Task"),
+          h("span", { style: "text-align:center" }, "Start"), h("span", { style: "text-align:center" }, "End"), h("span"))),
+      state.days.length ? state.days.map(renderDay)
+        : h("div", { class: "empty" }, "Start your first day with the button below.")),
+    h("div", { class: "foot" },
+      h("button", { class: "primary", onclick: addDay }, "+ Add day"),
+      h("span", { class: "hint" }, "Next row: " + DAY_NAMES[next.getDay()] + " " + fmtDate(toISO(next))),
+      catchUp ? h("button", { onclick: addDaysToToday }, "Add days up to today") : null,
+      h("button", { onclick: exportExcel }, "Export to Excel"))
+  ].filter(Boolean));
+}
+
+function renderSignIn(message) {
+  app.replaceChildren(h("div", { class: "signin" },
+    h("h1", { style: "margin-bottom:8px" }, "My planner"),
+    h("p", { style: "color:var(--muted)" }, "Sign in to open your tasks."),
+    h("button", { class: "primary", onclick: async () => {
+      try { await store.signIn(); } catch (e) { renderSignIn("Couldn't sign in. " + (e && e.code ? e.code : "")); }
+    } }, "Sign in with Google"),
+    message ? h("div", { class: "err" }, message) : null));
+}
+
+/* ---------- start ---------- */
+if (firebaseConfig.apiKey) {
+  app.replaceChildren(h("div", { class: "signin" }, "Loading…"));
+  try {
+    store = await firebaseStore();
+  } catch (e) {
+    console.error(e);
+    app.replaceChildren(h("div", { class: "signin" }, h("div", { class: "err" }, "Couldn't reach Firebase. Check your connection and reload.")));
+    return;
+  }
+  store.onUser(async user => {
+    if (!user) { userEmail = ""; renderSignIn(); return; }
+    userEmail = user.email || "Signed in";
+    try {
+      state = { categories: DEFAULT_CATEGORIES.map(c => ({ ...c })), days: [] };
+      applyLoaded(await store.load());
+      setStatus("Saved");
+      render();
+    } catch (e) {
+      console.error(e);
+      renderSignIn("This account can't open the planner. Check the Firestore rules.");
+    }
+  });
+} else {
+  store = localStore();
+  applyLoaded(await store.load());
+  render();
+}
+
+})();
+</script>
+</body>
+</html>
