@@ -481,8 +481,8 @@ function renderTask(day, task) {
     });
     return el;
   };
-  const start = timeInput("start", "Start time", "9:00 AM");
-  const end = timeInput("end", "End time", "10:00 AM");
+  const start = timeInput("start", "Start time");
+  const end = timeInput("end", "End time");
   function checkOrder() {
     const wrong = task.start && task.end && task.end <= task.start;
     end.classList.toggle("bad", !!wrong);
